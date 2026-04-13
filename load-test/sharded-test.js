@@ -13,6 +13,6 @@ export default function () {
     headers: { "x-user-id": randomUserId.toString() },
   };
 
-  const res = http.get("http://localhost:3000/sharded", params);
+  const res = http.get("http://host.docker.internal:3000/sharded", params);
   check(res, { "status was 200": (r) => r.status === 200 });
 }

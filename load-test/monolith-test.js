@@ -7,6 +7,6 @@ export const options = {
 };
 
 export default function () {
-  const res = http.get("http://localhost:3000/monolith");
+  const res = http.get("http://host.docker.internal:3000/monolith");
   check(res, { "status was 200": (r) => r.status === 200 });
 }
