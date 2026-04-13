@@ -232,19 +232,20 @@
         </div>
       </section>
     </main>
-
     <script>
       let liveModeInterval = null;
       const data = {
         monolith: {
-          maxRps: 400,
-          maxLatency: 350,
+          peakRps: 0,
+          avgLat: 0,
+          latCount: 0,
           isFinal: false,
           hasData: false,
         },
         sharded: {
-          maxRps: 400,
-          maxLatency: 350,
+          peakRps: 0,
+          avgLat: 0,
+          latCount: 0,
           isFinal: false,
           hasData: false,
         },
@@ -275,6 +276,17 @@
               if (latency > 0) {
                 data[type].hasData = true;
                 data[type].isFinal = false;
+
+                // Track peaks for the Reel
+                if (currentRps > data[type].peakRps)
+                  data[type].peakRps = currentRps;
+
+                // Rolling average for latency stability
+                data[type].avgLat =
+                  (data[type].avgLat * data[type].latCount + latency) /
+                  (data[type].latCount + 1);
+                data[type].latCount++;
+
                 updateUI(type, currentRps, latency);
               }
             } else if (data[type].hasData && !data[type].isFinal) {
@@ -292,37 +304,35 @@
             "ring-4",
             type === "monolith" ? "ring-monolith/30" : "ring-sharded/30",
           );
+
         if (data.monolith.isFinal && data.sharded.isFinal) {
-          const mRps = parseInt(
-            document.getElementById("rps-monolith").innerText,
-          );
-          const sRps = parseInt(
-            document.getElementById("rps-sharded").innerText,
-          );
-          const mLat = parseInt(
-            document.getElementById("latency-monolith").innerText,
-          );
-          const sLat = parseInt(
-            document.getElementById("latency-sharded").innerText,
-          );
+          const mRps = data.monolith.peakRps;
+          const sRps = data.sharded.peakRps;
+          const mLat = Math.round(data.monolith.avgLat);
+          const sLat = Math.round(data.sharded.avgLat);
 
           const rpsGain = Math.round(((sRps - mRps) / mRps) * 100);
           const latRed = Math.round(((mLat - sLat) / mLat) * 100);
 
           document.getElementById("summary-rps").innerText = `+${rpsGain}%`;
           document.getElementById("summary-latency").innerText = `-${latRed}%`;
+
+          // Re-update the cards to show peaks for the final shot
+          updateUI("monolith", mRps, mLat);
+          updateUI("sharded", sRps, sLat);
+
           setTimeout(
             () =>
               document
                 .getElementById("victory-modal")
                 .classList.remove("hidden"),
-            1000,
+            800,
           );
         }
       }
 
       function updateUI(type, rps, latency) {
-        const stats = data[type];
+        const stats = { maxRps: 400, maxLatency: 350 };
         document.getElementById(`rps-${type}`).innerText = `${rps} RPS`;
         document.getElementById(`bar-rps-${type}`).style.width =
           `${(rps / stats.maxRps) * 100}%`;
@@ -347,7 +357,7 @@
         }
       }
 
-      window.onload = toggleLiveMode; // Auto-start listening
+      window.onload = toggleLiveMode;
     </script>
   </body>
 </html>
