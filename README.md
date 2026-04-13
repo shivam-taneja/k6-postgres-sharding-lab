@@ -1,0 +1,38 @@
+# K6 Postgres Sharding Lab
+
+This project is a local simulation designed to demonstrate the performance differences between a monolithic database architecture and a distributed, sharded database architecture.
+
+We use Docker to spin up PostgreSQL containers with severely restricted CPU limits (10% of a core). This artificial bottleneck allows us to simulate heavy database load and observe "hotspots" without crashing the host machine.
+
+## Architecture
+
+- **Database Layer:** Three PostgreSQL containers. One acts as the monolith, and the other two act as shards.
+- **API Layer:** A simple Node.js (Express) server that routes traffic. It has two endpoints:
+  - `/monolith`: Routes all traffic to the single monolithic database.
+  - `/sharded`: Inspects a simulated User ID header and splits traffic evenly between Shard 1 and Shard 2.
+- **Load Testing:** K6 scripts that generate concurrent virtual users to hammer the API endpoints.
+
+## Prerequisites
+
+- Docker and Docker Compose
+- Node.js and npm
+- K6 installed locally
+
+## How to Run the Lab
+
+1. Start the databases:
+   Run `docker compose up -d` from the root directory.
+
+2. Start the API router:
+   Navigate to the `/api` folder, run `npm install`, then run `node server.js`.
+
+3. Run the Monolith Test:
+   Open a new terminal and run `k6 run load-tests/monolith-test.js`. Observe the high failure rate and latency.
+
+4. Run the Sharded Test:
+   Run `k6 run load-tests/sharded-test.js`. Observe the improved throughput and lower latency as the load is distributed across multiple database containers.
+
+## Cleanup
+
+To stop the databases and completely wipe the persistent data volumes, run:
+`docker compose down -v`
