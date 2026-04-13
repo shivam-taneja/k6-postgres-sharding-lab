@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Postgres Sharding Lab | Performance Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Outfit", "sans-serif"] },
+            colors: {
+              monolith: "#f59e0b",
+              sharded: "#10b981",
+              dark: "#0f172a",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        background-color: #020617;
+        color: #f8fafc;
+        overflow: hidden;
+      }
+      .glass {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .gradient-text {
+        background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .monolith-glow {
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+      }
+      .sharded-glow {
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+      }
+      .shining-bar {
+        position: relative;
+        overflow: hidden;
+      }
+      .shining-bar::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        animation: shine 3s infinite;
+      }
+      @keyframes shine {
+        to {
+          left: 200%;
+        }
+      }
+      .modal-bg {
+        background: rgba(2, 6, 23, 0.85);
+        backdrop-filter: blur(8px);
+      }
+    </style>
+  </head>
+  <body
+    class="min-h-screen p-4 md:p-8 flex flex-col items-center justify-center"
+  >
+    <!-- Victory Modal -->
+    <div
+      id="victory-modal"
+      class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-bg"
+    >
+      <div
+        class="glass max-w-2xl w-full p-10 rounded-[3rem] border-2 border-sharded/50 text-center shadow-2xl scale-90 animate-in zoom-in duration-300"
+      >
+        <h3 class="text-4xl font-bold mb-2">🏆 Lab Complete!</h3>
+        <p class="text-slate-400 mb-10 text-lg">
+          Sharding vs. Monolith Results
+        </p>
+        <div class="grid grid-cols-2 gap-8 mb-10">
+          <div class="p-6 rounded-3xl bg-sharded/10 border border-sharded/20">
+            <span
+              class="text-slate-400 text-sm block mb-1 uppercase tracking-widest"
+              >Speed Boost</span
+            >
+            <span id="summary-rps" class="text-6xl font-bold text-sharded"
+              >+0%</span
+            >
+          </div>
+          <div class="p-6 rounded-3xl bg-sharded/10 border border-sharded/20">
+            <span
+              class="text-slate-400 text-sm block mb-1 uppercase tracking-widest"
+              >Latency Cut</span
+            >
+            <span id="summary-latency" class="text-6xl font-bold text-sharded"
+              >-0%</span
+            >
+          </div>
+        </div>
+        <button
+          onclick="location.reload()"
+          class="px-8 py-3 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 transition-all text-sm"
+        >
+          Start New Recording
+        </button>
+      </div>
+    </div>
+
+    <header class="max-w-6xl w-full mb-12 flex justify-between items-center">
+      <div>
+        <h1 class="text-4xl font-bold gradient-text">Performance Lab</h1>
+        <p class="text-slate-400 mt-1">Real-time Sharding Simulation</p>
+      </div>
+      <button
+        id="live-toggle"
+        onclick="toggleLiveMode()"
+        class="px-8 py-3 rounded-full bg-sky-500/10 text-sky-500 border border-sky-500/30 hover:bg-sky-500/20 transition-all font-bold"
+      >
+        Wait For Test...
+      </button>
+    </header>
+
+    <main class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Monolith Card -->
+      <section
+        id="card-monolith"
+        class="glass rounded-[2.5rem] p-10 transition-all duration-500 monolith-glow"
+      >
+        <span
+          class="px-4 py-1 rounded-full bg-monolith/10 text-monolith text-xs font-bold uppercase tracking-widest"
+          >Monolith</span
+        >
+        <h2 class="text-3xl font-bold mt-4 mb-10">Single Node</h2>
+
+        <div class="space-y-10">
+          <div>
+            <div
+              class="flex justify-between mb-3 text-sm text-slate-400 uppercase tracking-widest"
+            >
+              <span>Throughput</span>
+              <span class="font-bold text-white text-xl" id="rps-monolith"
+                >0 RPS</span
+              >
+            </div>
+            <div class="h-3 bg-slate-800 rounded-full shining-bar">
+              <div
+                id="bar-rps-monolith"
+                class="h-full bg-monolith rounded-full transition-all duration-700"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+          <div>
+            <div
+              class="flex justify-between mb-3 text-sm text-slate-400 uppercase tracking-widest"
+            >
+              <span>Latency</span>
+              <span class="font-bold text-white text-xl" id="latency-monolith"
+                >0 ms</span
+              >
+            </div>
+            <div class="h-3 bg-slate-800 rounded-full">
+              <div
+                id="bar-latency-monolith"
+                class="h-full bg-monolith rounded-full transition-all duration-700"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sharded Card -->
+      <section
+        id="card-sharded"
+        class="glass rounded-[2.5rem] p-10 transition-all duration-500 sharded-glow"
+      >
+        <span
+          class="px-4 py-1 rounded-full bg-sharded/10 text-sharded text-xs font-bold uppercase tracking-widest text-emerald-400"
+          >Sharded</span
+        >
+        <h2 class="text-3xl font-bold mt-4 mb-10">2-Shard Cluster</h2>
+
+        <div class="space-y-10">
+          <div>
+            <div
+              class="flex justify-between mb-3 text-sm text-slate-400 uppercase tracking-widest"
+            >
+              <span>Throughput</span>
+              <span class="font-bold text-white text-xl" id="rps-sharded"
+                >0 RPS</span
+              >
+            </div>
+            <div class="h-3 bg-slate-800 rounded-full shining-bar">
+              <div
+                id="bar-rps-sharded"
+                class="h-full bg-sharded rounded-full transition-all duration-700"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+          <div>
+            <div
+              class="flex justify-between mb-3 text-sm text-slate-400 uppercase tracking-widest"
+            >
+              <span>Latency</span>
+              <span class="font-bold text-white text-xl" id="latency-sharded"
+                >0 ms</span
+              >
+            </div>
+            <div class="h-3 bg-slate-800 rounded-full">
+              <div
+                id="bar-latency-sharded"
+                class="h-full bg-sharded rounded-full transition-all duration-700"
+                style="width: 0%"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      let liveModeInterval = null;
+      const data = {
+        monolith: {
+          maxRps: 400,
+          maxLatency: 350,
+          isFinal: false,
+          hasData: false,
+        },
+        sharded: {
+          maxRps: 400,
+          maxLatency: 350,
+          isFinal: false,
+          hasData: false,
+        },
+      };
+
+      async function fetchLiveStats() {
+        const INFLUX_URL = "http://localhost:8086/query?db=k6&q=";
+        const queries = {
+          monolith: `SELECT mean("value") as latency, count("value") as count FROM "http_req_duration" WHERE "testid" = 'monolith-v1' AND time > now() - 6s`,
+          sharded: `SELECT mean("value") as latency, count("value") as count FROM "http_req_duration" WHERE "testid" = 'sharded-v1' AND time > now() - 6s`,
+        };
+
+        for (const type of ["monolith", "sharded"]) {
+          try {
+            const resp = await fetch(
+              `${INFLUX_URL}${encodeURIComponent(queries[type])}`,
+            );
+            const result = await resp.json();
+
+            if (result.results && result.results[0].series) {
+              const series = result.results[0].series[0];
+              const latency = Math.round(
+                series.values[0][series.columns.indexOf("latency")],
+              );
+              const count = series.values[0][series.columns.indexOf("count")];
+              const currentRps = Math.round(count / 6);
+
+              if (latency > 0) {
+                data[type].hasData = true;
+                data[type].isFinal = false;
+                updateUI(type, currentRps, latency);
+              }
+            } else if (data[type].hasData && !data[type].isFinal) {
+              data[type].isFinal = true;
+              markFinal(type);
+            }
+          } catch (e) {}
+        }
+      }
+
+      function markFinal(type) {
+        document
+          .getElementById(`card-${type}`)
+          .classList.add(
+            "ring-4",
+            type === "monolith" ? "ring-monolith/30" : "ring-sharded/30",
+          );
+        if (data.monolith.isFinal && data.sharded.isFinal) {
+          const mRps = parseInt(
+            document.getElementById("rps-monolith").innerText,
+          );
+          const sRps = parseInt(
+            document.getElementById("rps-sharded").innerText,
+          );
+          const mLat = parseInt(
+            document.getElementById("latency-monolith").innerText,
+          );
+          const sLat = parseInt(
+            document.getElementById("latency-sharded").innerText,
+          );
+
+          const rpsGain = Math.round(((sRps - mRps) / mRps) * 100);
+          const latRed = Math.round(((mLat - sLat) / mLat) * 100);
+
+          document.getElementById("summary-rps").innerText = `+${rpsGain}%`;
+          document.getElementById("summary-latency").innerText = `-${latRed}%`;
+          setTimeout(
+            () =>
+              document
+                .getElementById("victory-modal")
+                .classList.remove("hidden"),
+            1000,
+          );
+        }
+      }
+
+      function updateUI(type, rps, latency) {
+        const stats = data[type];
+        document.getElementById(`rps-${type}`).innerText = `${rps} RPS`;
+        document.getElementById(`bar-rps-${type}`).style.width =
+          `${(rps / stats.maxRps) * 100}%`;
+        document.getElementById(`latency-${type}`).innerText = `${latency} ms`;
+        document.getElementById(`bar-latency-${type}`).style.width =
+          `${(latency / stats.maxLatency) * 100}%`;
+      }
+
+      function toggleLiveMode() {
+        const btn = document.getElementById("live-toggle");
+        if (liveModeInterval) {
+          clearInterval(liveModeInterval);
+          liveModeInterval = null;
+          btn.innerText = "Wait For Test...";
+          btn.classList.replace("bg-rose-500/10", "bg-sky-500/10");
+          btn.classList.replace("text-rose-500", "text-sky-500");
+        } else {
+          liveModeInterval = setInterval(fetchLiveStats, 1000);
+          btn.innerText = "Listening...";
+          btn.classList.replace("bg-sky-500/10", "bg-rose-500/10");
+          btn.classList.replace("text-sky-500", "text-rose-500");
+        }
+      }
+
+      window.onload = toggleLiveMode; // Auto-start listening
+    </script>
+  </body>
+</html>
