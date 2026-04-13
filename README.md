@@ -24,7 +24,7 @@ We use Docker to spin up PostgreSQL containers with severely restricted CPU limi
    Run `docker compose up -d` from the root directory.
 
 2. Start the API router:
-   Navigate to the `/api` folder, run `npm install`, then run `node server.js`.
+   Navigate to the `/api` folder, run `pnpm install`, then run `node server.js`.
 
 3. Run the Monolith Test:
    Open a new terminal and run `k6 run load-tests/monolith-test.js`. Observe the high failure rate and latency.
