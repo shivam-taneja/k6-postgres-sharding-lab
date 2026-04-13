@@ -20,7 +20,7 @@ We use Docker to spin up PostgreSQL containers with severely restricted CPU limi
 ## How to Run the Lab
 
 1. **Start the Infrastructure:**
-   Run docker compose up -d from the root directory. This starts Postgres, InfluxDB, Grafana, and also installs k6 for testing.
+   Run `docker compose up -d` from the root directory. This starts Postgres, InfluxDB, Grafana, and also installs k6 for testing.
 
 2. **Start the API Server:**
    In your main terminal, run:
@@ -33,15 +33,21 @@ We use Docker to spin up PostgreSQL containers with severely restricted CPU limi
    _Note: Check the terminal for logs to confirm requests are hitting the server._
 
 3. **Run the Load Tests:**
-   Use the pre-configured npm scripts to ensure data is sent to InfluxDB:
+   Use the pre-configured pnpm scripts to ensure data is sent to InfluxDB:
    - **Monolith Test:** `pnpm run test:monolith`
    - **Sharded Test:** `pnpm run test:sharded`
 
 4. **Visualize in Grafana:**
    - Open [http://localhost:3001](http://localhost:3001) (No login required).
-   - Go to **Explore** (compass icon).
-   - Select the **k6** datasource.
-   - Select a measurement like `http_req_duration`.
+   - **Add the Datasource (First time only):**
+     - Go to **Connections > Data sources** and click **Add data source**.
+     - Select **InfluxDB**.
+     - **URL:** `http://influxdb:8086`
+     - **Database:** `k6`
+     - Click **Save & Test**. It should return "datasource is working".
+   - **Explore/Visualize:**
+     - Go to **Explore** (compass icon) and select the **k6** datasource.
+     - Select a measurement like `http_req_duration` to see the results.
    - **Pro Tip:** Import a pre-made dashboard! Go to **Dashboards > Import** and enter ID `2587`. This will give you a professional k6 visualization immediately.
 
 ## Cleanup

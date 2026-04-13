@@ -4,6 +4,10 @@ import { check } from "k6";
 export const options = {
   vus: 50,
   duration: "15s",
+  tags: {
+    testid: "monolith-v1",
+    scenario: "default",
+  },
 };
 
 const BASE_URL = __ENV.BASE_URL || "http://host.docker.internal:3000";
