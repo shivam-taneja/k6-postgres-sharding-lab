@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node api/server.js",
     "test:monolith": "docker compose run --rm -e BASE_URL=http://host.docker.internal:3000 k6 run --out influxdb=http://influxdb:8086/k6 /scripts/monolith-test.js",
-    "test:sharded": "docker compose run --rm -e BASE_URL=http://host.docker.internal:3000 k6 run --out influxdb=http://influxdb:8086/k6 /scripts/sharded-test.js"
+    "test:sharded": "docker compose run --rm -e BASE_URL=http://host.docker.internal:3000 k6 run --out influxdb=http://influxdb:8086/k6 /scripts/sharded-test.js",
+    "test:full": "concurrently \"pnpm run test:monolith\" \"pnpm run test:sharded\""
   },
   "keywords": [],
   "author": "",
@@ -14,5 +15,8 @@
   "dependencies": {
     "express": "^5.2.1",
     "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }

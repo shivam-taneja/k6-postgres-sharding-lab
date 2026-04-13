@@ -1,4 +1,4 @@
-# Postgres Sharding Lab 🚀
+# Postgres Sharding Lab
 
 This lab demonstrates the performance difference between a monolithic and a sharded PostgreSQL architecture using custom real-time visualization.
 
@@ -27,9 +27,10 @@ This lab demonstrates the performance difference between a monolithic and a shar
    Open `index.html` in your browser. It will automatically start listening for test data.
 
 4. **Run Load Tests:**
-   Run these in separate terminals to see the comparison:
-   - **Monolith:** `pnpm run test:monolith`
-   - **Sharded:** `pnpm run test:sharded`
+   You can run tests individually, or or use the "Race" command to see them side-by-side in real-time:
+   - **The Race (Parallel):** `pnpm run test:full`
+   - **Monolith Only:** `pnpm run test:monolith`
+   - **Sharded Only:** `pnpm run test:sharded`
 
 ## Visualization Note
 
