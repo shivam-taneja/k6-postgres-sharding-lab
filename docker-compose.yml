@@ -21,7 +21,6 @@ services:
     image: grafana/k6:latest
     volumes:
       - ./load-test:/scripts
-    network_mode: host
 
   db-monolith:
     container_name: sharding-demo-monolith

@@ -6,7 +6,9 @@ export const options = {
   duration: "15s",
 };
 
+const BASE_URL = __ENV.BASE_URL || "http://host.docker.internal:3000";
+
 export default function () {
-  const res = http.get("http://host.docker.internal:3000/monolith");
+  const res = http.get(`${BASE_URL}/monolith`);
   check(res, { "status was 200": (r) => r.status === 200 });
 }

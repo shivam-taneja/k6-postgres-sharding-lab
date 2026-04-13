@@ -20,17 +20,30 @@ We use Docker to spin up PostgreSQL containers with severely restricted CPU limi
 
 ## How to Run the Lab
 
-1. Start the databases:
-   Run `docker compose up -d` from the root directory.
+1. **Start the Infrastructure:**
+   Run `docker compose up -d` from the root directory. This starts Postgres, InfluxDB, and Grafana.
 
-2. Start the API router:
-   Navigate to the `/api` folder, run `pnpm install`, then run `node server.js`.
+2. **Start the API Server:**
+   In your main terminal, run:
 
-3. Run the Monolith Test:
-   Open a new terminal and run `k6 run load-tests/monolith-test.js`. Observe the high failure rate and latency.
+   ```bash
+   pnpm install
+   pnpm run dev
+   ```
 
-4. Run the Sharded Test:
-   Run `k6 run load-tests/sharded-test.js`. Observe the improved throughput and lower latency as the load is distributed across multiple database containers.
+   _Note: Check the terminal for logs to confirm requests are hitting the server._
+
+3. **Run the Load Tests:**
+   Use the pre-configured npm scripts to ensure data is sent to InfluxDB:
+   - **Monolith Test:** `pnpm run test:monolith`
+   - **Sharded Test:** `pnpm run test:sharded`
+
+4. **Visualize in Grafana:**
+   - Open [http://localhost:3001](http://localhost:3001) (No login required).
+   - Go to **Explore** (compass icon).
+   - Select the **k6** datasource.
+   - Select a measurement like `http_req_duration`.
+   - **Pro Tip:** Import a pre-made dashboard! Go to **Dashboards > Import** and enter ID `2587`. This will give you a professional k6 visualization immediately.
 
 ## Cleanup
 

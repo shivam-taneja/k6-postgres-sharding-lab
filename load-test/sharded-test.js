@@ -6,6 +6,8 @@ export const options = {
   duration: "15s",
 };
 
+const BASE_URL = __ENV.BASE_URL || "http://host.docker.internal:3000";
+
 export default function () {
   const randomUserId = Math.floor(Math.random() * 1000);
 
@@ -13,6 +15,6 @@ export default function () {
     headers: { "x-user-id": randomUserId.toString() },
   };
 
-  const res = http.get("http://host.docker.internal:3000/sharded", params);
+  const res = http.get(`${BASE_URL}/sharded`, params);
   check(res, { "status was 200": (r) => r.status === 200 });
 }
