@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "node api/server.js",
+    "test:monolith": "docker compose run --rm k6 run /scripts/monolith-test.js",
+    "test:sharded": "docker compose run --rm k6 run /scripts/sharded-test.js"
   },
   "keywords": [],
   "author": "",
