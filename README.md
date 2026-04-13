@@ -15,13 +15,12 @@ We use Docker to spin up PostgreSQL containers with severely restricted CPU limi
 ## Prerequisites
 
 - Docker and Docker Compose
-- Node.js and npm
-- K6 installed locally
+- Node.js and pnpm
 
 ## How to Run the Lab
 
 1. **Start the Infrastructure:**
-   Run `docker compose up -d` from the root directory. This starts Postgres, InfluxDB, and Grafana.
+   Run docker compose up -d from the root directory. This starts Postgres, InfluxDB, Grafana, and also installs k6 for testing.
 
 2. **Start the API Server:**
    In your main terminal, run:
