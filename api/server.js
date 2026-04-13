@@ -21,6 +21,7 @@ app.get("/monolith", async (req, res) => {
     await poolMonolith.query(SIMULATED_QUERY);
     res.status(200).send("Monolith Success");
   } catch (err) {
+    console.log(err);
     res.status(500).send("Database Overloaded");
   }
 });
@@ -36,6 +37,7 @@ app.get("/sharded", async (req, res) => {
     }
     res.status(200).send("Sharded Success");
   } catch (err) {
+    console.log(err);
     res.status(500).send("Database Overloaded");
   }
 });
